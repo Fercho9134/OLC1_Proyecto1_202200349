@@ -1,0 +1,32 @@
+/*--------------Codigo usuario-------------*/
+
+//Importaciones paquetes
+package Analizadores;
+import java_cup.runtime.*;
+
+//Parser, variables, metodos
+parser code {:
+    public void syntax_error(Symbol s){
+        System.out.println("Error sintáctico: "+s.value+" linea: "+s.left+" columna: "+s.right);
+    }
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        System.out.println("Error sintáctico unrecovered: "+s.value+" linea: "+s.left+" columna: "+s.right);
+    }
+:}
+
+
+terminal String DECIMAL;
+terminal String PROGRAM, END;
+terminal String VAR, CORCHETE_IZQ, CORCHETE_DER, DOUBLE, CHAR, DOS_PUNTOS, PUNTO_COMA;
+terminal String MENOR, GUION, CADENA, IDENTIFICADOR, ARR, ARROBA, COMA;
+terminal String SUM, RES, MULT, DIV, MOD, PARENTESIS_IZQ, PARENTESIS_DER;
+terminal String MEDIA, MEDIANA, MODA, VARIANZA, MAX, MIN;
+terminal String CONSOLE, PRINT, IGUAL, COLUMN, MAYOR;
+terminal String GRAPHBAR, TITULO, EJEX, EJEY, TITULOX, TITULOY, EXEC;
+terminal String GRAPHPIE, LABEL, VALUES, GRAPHLINE, HISTOGRAM;
+
+non terminal inicio, codigo;
+
+inicio ::= PROGRAM codigo END PROGRAM
+
+codigo ::= 
