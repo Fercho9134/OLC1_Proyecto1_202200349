@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import javax.swing.JOptionPane;
+import main.TablaSimbolos;
 import main.Token;
 
 /**
@@ -156,12 +157,14 @@ public class Codigo extends javax.swing.JInternalFrame {
 
     private void btnEjecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEjecutarActionPerformed
         Principal.listaTokens.clear();
+        
         try {
             String text = this.txtEntradaCodigo.getText();
             System.out.println(text);
             Analizador_Lexico scanner = new Analizador_Lexico(new BufferedReader(new StringReader(text)));
             Parser parser = new Parser(scanner);
             parser.parse();
+            parser.imprimirVariables();
         } catch (Exception e) {
           //  System.out.println(e);
           e.printStackTrace();
@@ -170,6 +173,8 @@ public class Codigo extends javax.swing.JInternalFrame {
         for(Token token : Principal.listaTokens){
             System.out.println("Tipo: " + token.getTipo() + " Lexema: " + token.getLexema() + " Fila: " + token.getFila() + " Columna: " + token.getColumna());
         }
+        
+     
     }//GEN-LAST:event_btnEjecutarActionPerformed
 
     public void agregarCodigoTextArea(String codigo, String filePath){

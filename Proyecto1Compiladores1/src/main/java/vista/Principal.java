@@ -62,6 +62,7 @@ public class Principal extends javax.swing.JFrame {
         txtConsola.setColumns(20);
         txtConsola.setFont(new java.awt.Font("Consolas", 0, 14)); // NOI18N
         txtConsola.setRows(5);
+        txtConsola.setEnabled(false);
         jScrollPane1.setViewportView(txtConsola);
 
         jLabel2.setFont(new java.awt.Font("Bebas Neue", 0, 16)); // NOI18N

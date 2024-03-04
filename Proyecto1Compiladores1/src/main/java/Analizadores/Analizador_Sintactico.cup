@@ -3,14 +3,26 @@
 //Importaciones paquetes
 package Analizadores;
 import java_cup.runtime.*;
+import main.TablaSimbolos;
+import main.Variable;
 
 //Parser, variables, metodos
 parser code {:
+
+    TablaSimbolos tablaSimbolos = new TablaSimbolos();
+
     public void syntax_error(Symbol s){
         System.out.println("Error sintáctico: "+s.value+" linea: "+s.left+" columna: "+s.right);
     }
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
         System.out.println("Error sintáctico unrecovered: "+s.value+" linea: "+s.left+" columna: "+s.right);
+    }
+
+    public void imprimirVariables() {
+        System.out.println("Variables reconocidas:");
+        for (Variable variable : tablaSimbolos.obtenerVariables()) {
+            System.out.println(variable.toString());
+        }
     }
 :}
 
@@ -25,8 +37,49 @@ terminal String CONSOLE, PRINT, IGUAL, COLUMN, MAYOR;
 terminal String GRAPHBAR, TITULO, EJEX, EJEY, TITULOX, TITULOY, EXEC;
 terminal String GRAPHPIE, LABEL, VALUES, GRAPHLINE, HISTOGRAM;
 
-non terminal inicio, codigo;
+non terminal inicio, codigo, sentencia, declaracion, arreglo, tipo_variable, valor, operacion, expresion_aritmetica;
 
-inicio ::= PROGRAM codigo END PROGRAM
+/*--------------Producciones-------------*/
 
-codigo ::= 
+inicio ::= PROGRAM codigo END PROGRAM;
+
+codigo ::= sentencia | codigo sentencia;
+
+sentencia ::= declaracion | arreglo;
+
+declaracion ::= VAR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS IDENTIFICADOR:b MENOR GUION operacion:c  END PUNTO_COMA{:
+    
+    String tipo_variable =String.valueOf(a);
+    String nombre = String.valueOf(b);
+    nombre = nombre.toLowerCase();
+    String valor = String.valueOf(c);
+
+    System.out.println("Declaración de variable: "+tipo_variable+" "+nombre+" = "+valor);
+
+    //Si C es un identificador, se busca en la tabla de simbolos
+    //Si es decimal solo seran numeros, si es una cadena contendrá comillas
+    //Si es un identificador puede tener letras y numeros pero no comillas
+    tablaSimbolos.agregarVariable(new Variable(tipo_variable, nombre, valor));
+    
+
+:};
+
+tipo_variable ::= DOUBLE:r {:RESULT = r;:} | CHAR:r {:RESULT = r;:};
+
+
+operacion ::= SUM PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {:RESULT = Double.parseDouble(n1.toString()) + Double.parseDouble(n2.toString());:}
+                | RES PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {:RESULT = Double.parseDouble(n1.toString()) - Double.parseDouble(n2.toString());:}
+                | MULT PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {:RESULT = Double.parseDouble(n1.toString()) * Double.parseDouble(n2.toString());:}
+                | DIV PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {:RESULT = Double.parseDouble(n1.toString()) / Double.parseDouble(n2.toString());:}
+                | MOD PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {:RESULT = Double.parseDouble(n1.toString()) % Double.parseDouble(n2.toString());:}
+                | DECIMAL:n {:RESULT = n;:}
+                | IDENTIFICADOR:id {:
+                    Variable variable = tablaSimbolos.obtenerVariable(id.toString().toLowerCase());
+                    if (variable != null) {
+                        RESULT = variable.getValor();
+                    } else {
+                        System.out.println("Error semántico: La variable "+id+" no ha sido declarada");
+                    }
+                :}
+                | CADENA:n {:RESULT = n;:};
+
