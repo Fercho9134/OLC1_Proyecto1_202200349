@@ -165,11 +165,13 @@ public class Codigo extends javax.swing.JInternalFrame {
             Parser parser = new Parser(scanner);
             parser.parse();
             parser.imprimirVariables();
+            parser.imprimirArreglos();
         } catch (Exception e) {
           //  System.out.println(e);
           e.printStackTrace();
         }
         
+        System.out.println("********Imprimiendo Tokens*******");
         for(Token token : Principal.listaTokens){
             System.out.println("Tipo: " + token.getTipo() + " Lexema: " + token.getLexema() + " Fila: " + token.getFila() + " Columna: " + token.getColumna());
         }

@@ -17,6 +17,7 @@ public class main {
 
     public static void main(String[] args) {
         Principal.listaTokens.add(new Token("A", "A", 1, 1));
+          
         
          try {
             String ruta = "C:/Users/ferch/Documents/Repositorios Github/OLC1_Proyecto1_202200349/Proyecto1Compiladores1/src/main/java/Analizadores/"; 

@@ -5,11 +5,15 @@ package Analizadores;
 import java_cup.runtime.*;
 import main.TablaSimbolos;
 import main.Variable;
+import main.Arreglos;
+import main.TablaArreglos;
+import java.util.ArrayList;
 
 //Parser, variables, metodos
 parser code {:
 
     TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    TablaArreglos tablaArreglos = new TablaArreglos();
 
     public void syntax_error(Symbol s){
         System.out.println("Error sintáctico: "+s.value+" linea: "+s.left+" columna: "+s.right);
@@ -22,6 +26,13 @@ parser code {:
         System.out.println("Variables reconocidas:");
         for (Variable variable : tablaSimbolos.obtenerVariables()) {
             System.out.println(variable.toString());
+        }
+    }
+
+    public void imprimirArreglos() {
+        System.out.println("Arreglos reconocidos:");
+        for (Arreglos arreglo : tablaArreglos.obtenerArreglos()) {
+            System.out.println(arreglo.toString());
         }
     }
 :}
@@ -38,7 +49,7 @@ terminal String GRAPHBAR, TITULO, EJEX, EJEY, TITULOX, TITULOY, EXEC;
 terminal String GRAPHPIE, LABEL, VALUES, GRAPHLINE, HISTOGRAM;
 
 non terminal inicio, codigo, sentencia, declaracion, arreglo, tipo_variable, valor, operacion, expresion_aritmetica;
-
+non terminal valores_arreglo;
 /*--------------Producciones-------------*/
 
 inicio ::= PROGRAM codigo END PROGRAM;
@@ -82,4 +93,27 @@ operacion ::= SUM PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {
                     }
                 :}
                 | CADENA:n {:RESULT = n;:};
+
+arreglo ::= ARR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS ARROBA IDENTIFICADOR:b MENOR GUION CORCHETE_IZQ valores_arreglo:c CORCHETE_DER END PUNTO_COMA{:
+
+    String tipo_variable = String.valueOf(a);
+    String nombre = String.valueOf(b);
+
+    Arreglos arreglo = new Arreglos(tipo_variable, nombre);
+
+    ArrayList<Object> arrayList = (ArrayList<Object>) c;
+
+    for(Object valor : arrayList){
+        arreglo.agregarValor(valor);
+    }
+
+    tablaArreglos.agregarArreglo(arreglo);
+
+
+    :};
+
+valores_arreglo ::= operacion:v {:
+                        RESULT = new ArrayList<>();
+                        ((ArrayList<Object>) RESULT).add(v);:} 
+                    | valores_arreglo:lista COMA operacion:v {:((ArrayList<Object>) lista).add(v); RESULT = lista;:};
 
