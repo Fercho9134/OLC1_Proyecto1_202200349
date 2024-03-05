@@ -8,6 +8,11 @@ import main.Variable;
 import main.Arreglos;
 import main.TablaArreglos;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import vista.Principal;
+
 
 //Parser, variables, metodos
 parser code {:
@@ -49,14 +54,14 @@ terminal String GRAPHBAR, TITULO, EJEX, EJEY, TITULOX, TITULOY, EXEC;
 terminal String GRAPHPIE, LABEL, VALUES, GRAPHLINE, HISTOGRAM;
 
 non terminal inicio, codigo, sentencia, declaracion, arreglo, tipo_variable, valor, operacion, expresion_aritmetica;
-non terminal valores_arreglo;
+non terminal valores_arreglo, valores_arreglo_org, imprimir, lista_impresion, imprimir_arreglo, titulo_impresion;
 /*--------------Producciones-------------*/
 
 inicio ::= PROGRAM codigo END PROGRAM;
 
 codigo ::= sentencia | codigo sentencia;
 
-sentencia ::= declaracion | arreglo;
+sentencia ::= declaracion | arreglo | imprimir | imprimir_arreglo;
 
 declaracion ::= VAR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS IDENTIFICADOR:b MENOR GUION operacion:c  END PUNTO_COMA{:
     
@@ -64,6 +69,7 @@ declaracion ::= VAR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS IDENTIFICAD
     String nombre = String.valueOf(b);
     nombre = nombre.toLowerCase();
     String valor = String.valueOf(c);
+    
 
     System.out.println("Declaración de variable: "+tipo_variable+" "+nombre+" = "+valor);
 
@@ -92,12 +98,120 @@ operacion ::= SUM PARENTESIS_IZQ operacion:n1 COMA operacion:n2 PARENTESIS_DER {
                         System.out.println("Error semántico: La variable "+id+" no ha sido declarada");
                     }
                 :}
-                | CADENA:n {:RESULT = n;:};
+                | CADENA:n {:RESULT = n;:}
 
-arreglo ::= ARR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS ARROBA IDENTIFICADOR:b MENOR GUION CORCHETE_IZQ valores_arreglo:c CORCHETE_DER END PUNTO_COMA{:
+                | MEDIA PARENTESIS_IZQ valores_arreglo_org:v PARENTESIS_DER{:
+                    ArrayList<Object> arrayList = (ArrayList<Object>) v;
+                    double suma = 0;
+                    for(Object valor : arrayList){
+                        suma += Double.parseDouble(valor.toString());
+                    }
+                    RESULT = suma / arrayList.size();
+
+                :}
+                | MEDIANA PARENTESIS_IZQ valores_arreglo_org:v PARENTESIS_DER{:
+                    ArrayList<Object> arrayList = (ArrayList<Object>) v;
+                    //ordenamos el arreglo de menor a mayor
+                    //Parseamos los valores a double
+                    ArrayList<Double> valores = new ArrayList<>();
+                    for(Object valor : arrayList){
+                        valores.add(Double.parseDouble(valor.toString()));
+
+                    }
+
+                    Collections.sort(valores);
+
+                    int n = valores.size();
+
+                    if (n % 2 == 0) {
+                        RESULT = (valores.get((n-1)/2) + valores.get(n/2)) / 2;
+                    } else {
+                        RESULT = valores.get(n/2);
+                    }
+
+
+                     :} 
+
+                | MODA PARENTESIS_IZQ valores_arreglo_org:v PARENTESIS_DER{:
+
+                    ArrayList<Object> arrayList = (ArrayList<Object>) v;
+                    ArrayList<Double> valores = new ArrayList<>();
+                    for(Object valor : arrayList){
+                        valores.add(Double.parseDouble(valor.toString()));
+                    }
+
+                    Map<Double, Integer> frecuencias = new HashMap<>();
+
+                    for (Double valor : valores){
+                        frecuencias.put(valor, frecuencias.getOrDefault(valor, 0) + 1);
+                    }
+
+                    double moda = 0;
+
+                    int max = 0;
+
+                    for (Map.Entry<Double, Integer> entry : frecuencias.entrySet()){
+                        if (entry.getValue() > max){
+                            moda = entry.getKey();
+                            max = entry.getValue();
+                        }
+                    }
+
+                    RESULT = moda;
+
+                :}
+
+                | VARIANZA PARENTESIS_IZQ valores_arreglo_org:v PARENTESIS_DER{:
+
+                    ArrayList<Object> arrayList = (ArrayList<Object>) v;
+                    ArrayList<Double> valores = new ArrayList<>();
+                    for(Object valor : arrayList){
+                        valores.add(Double.parseDouble(valor.toString()));
+                    }
+
+                    //Calculamos la media
+                    double suma = 0;
+                    for(Double valor : valores){
+                        suma += valor;
+                    }
+                    double media = suma / valores.size();
+
+                    //calculamos la varianza
+                    double varianza = 0;
+                    for(Double valor : valores){
+                        varianza += Math.pow(valor - media, 2);
+                    }
+                    varianza = varianza / valores.size();
+
+                    RESULT = varianza;
+                :}
+
+                | MAX PARENTESIS_IZQ valores_arreglo_org:v PARENTESIS_DER{:
+                    ArrayList<Object> arrayList = (ArrayList<Object>) v;
+                    ArrayList<Double> valores = new ArrayList<>();
+                    for(Object valor : arrayList){
+                        valores.add(Double.parseDouble(valor.toString()));
+                    }
+
+                    RESULT = Collections.max(valores);
+                :}
+
+                | MIN PARENTESIS_IZQ valores_arreglo_org:v PARENTESIS_DER{:
+                    ArrayList<Object> arrayList = (ArrayList<Object>) v;
+                    ArrayList<Double> valores = new ArrayList<>();
+                    for(Object valor : arrayList){
+                        valores.add(Double.parseDouble(valor.toString()));
+                    }
+
+                    RESULT = Collections.min(valores);
+                :}
+                ;
+
+
+arreglo ::= ARR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS ARROBA IDENTIFICADOR:b MENOR GUION valores_arreglo_org:c END PUNTO_COMA{:
 
     String tipo_variable = String.valueOf(a);
-    String nombre = String.valueOf(b);
+    String nombre = String.valueOf(b).toLowerCase();
 
     Arreglos arreglo = new Arreglos(tipo_variable, nombre);
 
@@ -112,8 +226,48 @@ arreglo ::= ARR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS ARROBA IDENTIFI
 
     :};
 
+valores_arreglo_org ::= CORCHETE_IZQ valores_arreglo:v CORCHETE_DER {:RESULT = v;:} 
+                    |  /*Si lo que obtenenos es una variable refernciando a un arreglo*/ ARROBA IDENTIFICADOR:v {:
+                    
+                    Arreglos arreglo = tablaArreglos.obtenerArreglo(v.toString().toLowerCase());
+                    if (arreglo != null) {
+                        RESULT = arreglo.obtenerValores();
+                    } else {
+                        System.out.println("Error semántico: El arreglo "+v+" no ha sido declarado");
+                    }
+                    :} ;
+
 valores_arreglo ::= operacion:v {:
                         RESULT = new ArrayList<>();
                         ((ArrayList<Object>) RESULT).add(v);:} 
                     | valores_arreglo:lista COMA operacion:v {:((ArrayList<Object>) lista).add(v); RESULT = lista;:};
 
+imprimir ::= CONSOLE DOS_PUNTOS DOS_PUNTOS PRINT IGUAL lista_impresion END PUNTO_COMA {:Principal.txtConsola.append("\n");:};
+
+
+lista_impresion ::= operacion:v {:
+                        Principal.txtConsola.append(v.toString()+", ");
+                    :} 
+                    | lista_impresion:lista COMA operacion:v {:
+                        Principal.txtConsola.append(v.toString()+", ");
+                    :};
+
+imprimir_arreglo ::= CONSOLE DOS_PUNTOS DOS_PUNTOS COLUMN IGUAL titulo_impresion:t GUION MAYOR valores_arreglo_org:d END PUNTO_COMA{:
+
+                        String titulo = String.valueOf(t);
+                        ArrayList<Object> valores = (ArrayList<Object>) d;
+
+                        Principal.txtConsola.append("\n--------------------\n"+titulo+"\n--------------------\n");
+                        for(Object valor : valores){
+                            Principal.txtConsola.append(valor.toString()+"\n");
+                        }
+                        :};
+
+titulo_impresion ::= CADENA:t {:RESULT = t;:} | IDENTIFICADOR:t {:
+                        Variable variable = tablaSimbolos.obtenerVariable(t.toString().toLowerCase());
+                        if (variable != null) {
+                            RESULT = variable.getValor();
+                        } else {
+                            System.out.println("Error semántico: La variable "+t+" no ha sido declarada");
+                        }
+        :};
