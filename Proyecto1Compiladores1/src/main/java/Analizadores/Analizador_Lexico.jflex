@@ -25,7 +25,8 @@ import vista.Principal;
 
 %column
 // Expresiones regulares
-DECIMAL = [0-9]+(\.[0-9]+)?
+//Decimal positivo o negativo
+DECIMAL = -?[0-9]+(\.[0-9]+)?
 PROGRAM = "program"
 END = "end" 
 VAR = "var"
