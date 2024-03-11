@@ -1,0 +1,90 @@
+
+
+<inicio> ::= PROGRAM codigo END PROGRAM
+
+<codigo> ::= sentencia | codigo sentencia
+
+<sentencia> ::= declaracion | arreglo | imprimir | imprimir_arreglo | graficoPie | graficoBarra | graficoLinea | histograma_p
+
+<declaracion> ::= VAR DOS_PUNTOS tipo_variable DOS_PUNTOS DOS_PUNTOS IDENTIFICADOR MENOR GUION operacion  END PUNTO_COMA
+
+<tipo_variable> ::= DOUBLE | CHAR
+
+
+<operacion> ::= SUM PARENTESIS_IZQ operacion COMA operacion PARENTESIS_DER
+                | RES PARENTESIS_IZQ operacion COMA operacion PARENTESIS_DER
+                | MULT PARENTESIS_IZQ operacion COMA operacion PARENTESIS_DER
+                | DIV PARENTESIS_IZQ operacion COMA operacion PARENTESIS_DER
+                | MOD PARENTESIS_IZQ operacion COMA operacion PARENTESIS_DER
+                | DECIMAL
+                | IDENTIFICADOR
+                | CADENA
+                | MEDIA PARENTESIS_IZQ valores_arreglo_org PARENTESIS_DER
+                | MEDIANA PARENTESIS_IZQ valores_arreglo_org PARENTESIS_DER
+                | MODA PARENTESIS_IZQ valores_arreglo_org PARENTESIS_DER
+                | VARIANZA PARENTESIS_IZQ valores_arreglo_org PARENTESIS_DER
+                | MAX PARENTESIS_IZQ valores_arreglo_org PARENTESIS_DER
+
+
+<arreglo> ::= ARR DOS_PUNTOS tipo_variable DOS_PUNTOS DOS_PUNTOS ARROBA IDENTIFICADOR MENOR GUION valores_arreglo_org END PUNTO_COMA
+
+<valores_arreglo_org> ::= CORCHETE_IZQ valores_arreglo CORCHETE_DER 
+                    | ARROBA IDENTIFICADOR
+
+<valores_arreglo> ::= operacion
+                    | valores_arreglo COMA operacion
+
+<imprimir> ::= CONSOLE DOS_PUNTOS DOS_PUNTOS PRINT IGUAL lista_impresion END PUNTO_COMA
+
+
+<lista_impresion> ::= operacion
+                    | lista_impresion COMA operacion
+
+<imprimir_arreglo> ::= CONSOLE DOS_PUNTOS DOS_PUNTOS COLUMN IGUAL titulo_impresion GUION MAYOR valores_arreglo_org END PUNTO_COMA
+
+<titulo_impresion> ::= CADENA | IDENTIFICADOR
+
+<graficoPie> ::= GRAPHPIE PARENTESIS_IZQ lista_instrucciones_pie EXEC GRAPHPIE END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA
+
+<lista_instrucciones_pie> ::= valores_grafica_pie
+                        | lista_instrucciones_pie valores_grafica_pie
+
+<valores_grafica_pie> ::= LABEL DOS_PUNTOS DOS_PUNTOS CHAR IGUAL array_G END PUNTO_COMA
+                    | VALUES DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G END PUNTO_COMA
+                    | TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo END PUNTO_COMA
+
+<array_G> ::= valores_arreglo_org
+
+<cadena_titulo> ::= CADENA
+                    | IDENTIFICADOR
+
+<graficoBarra> ::= GRAPHBAR PARENTESIS_IZQ lista_instrucciones_barra EXEC GRAPHBAR END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA
+
+<lista_instrucciones_barra> ::= valores_grafica_barra
+                        | lista_instrucciones_barra valores_grafica_barra
+
+<valores_grafica_barra> ::= TITULOX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo END PUNTO_COMA
+                    | TITULOY DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo END PUNTO_COMA
+                    | EJEX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL array_G:x END PUNTO_COMA
+                    | EJEY DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G:y END PUNTO_COMA
+                    | TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA
+
+
+<graficoLinea> ::= GRAPHLINE PARENTESIS_IZQ lista_instrucciones_linea EXEC GRAPHLINE END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA
+
+<lista_instrucciones_linea> ::= valores_grafica_linea
+                        | lista_instrucciones_linea valores_grafica_linea
+
+<valores_grafica_linea> ::= TITULOX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo END PUNTO_COMA
+                    | TITULOY DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo END PUNTO_COMA
+                    | EJEX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL array_G END PUNTO_COMA
+                    | EJEY DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G END PUNTO_COMA
+                    | TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo END PUNTO_COMA
+
+<histograma_p> ::= HISTOGRAM PARENTESIS_IZQ lista_instrucciones_histograma EXEC HISTOGRAM END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA
+
+<lista_instrucciones_histograma> ::= valores_histograma
+                        | lista_instrucciones_histograma valores_histograma
+
+<valores_histograma> ::= TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL titulo_impresion END PUNTO_COMA
+                    | VALUES DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G END PUNTO_COMA
