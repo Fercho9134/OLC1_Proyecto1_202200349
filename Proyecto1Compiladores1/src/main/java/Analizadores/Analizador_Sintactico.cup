@@ -12,19 +12,37 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import vista.Principal;
-
+import org.jfree.chart.*;
+import org.jfree.data.general.*;
+import javax.swing.*;
+import vista.Grafica;
+import main.ErroresSintacticos;
+import org.jfree.data.category.DefaultCategoryDataset;
 
 //Parser, variables, metodos
 parser code {:
 
-    TablaSimbolos tablaSimbolos = new TablaSimbolos();
-    TablaArreglos tablaArreglos = new TablaArreglos();
+    DefaultPieDataset dataset = new DefaultPieDataset();
+    JFreeChart pieChart = ChartFactory.createPieChart(null, dataset, true, true, false);
+    DefaultCategoryDataset barChart = new DefaultCategoryDataset();
+    JFreeChart barchart = ChartFactory.createBarChart(null, null, null, barChart);
+    DefaultCategoryDataset dataLine = new DefaultCategoryDataset();
+    JFreeChart lineChart = ChartFactory.createLineChart(null, null, null, dataLine);
+    DefaultCategoryDataset histograma = new DefaultCategoryDataset();
+    JFreeChart histoChart = ChartFactory.createBarChart(null, null, null, histograma);
+    ArrayList<Object> valores_histograma_arreglo = new ArrayList<>();
+
+    public TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public TablaArreglos tablaArreglos = new TablaArreglos();
+    public ArrayList<ErroresSintacticos> erroresSintacticos = new ArrayList<>();
 
     public void syntax_error(Symbol s){
         System.out.println("Error sintáctico: "+s.value+" linea: "+s.left+" columna: "+s.right);
+        erroresSintacticos.add(new ErroresSintacticos("Sintactico", s.value.toString(), s.left, s.right));
     }
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
         System.out.println("Error sintáctico unrecovered: "+s.value+" linea: "+s.left+" columna: "+s.right);
+        erroresSintacticos.add(new ErroresSintacticos("Sintactico", s.value.toString(), s.left, s.right));
     }
 
     public void imprimirVariables() {
@@ -55,13 +73,17 @@ terminal String GRAPHPIE, LABEL, VALUES, GRAPHLINE, HISTOGRAM;
 
 non terminal inicio, codigo, sentencia, declaracion, arreglo, tipo_variable, valor, operacion, expresion_aritmetica;
 non terminal valores_arreglo, valores_arreglo_org, imprimir, lista_impresion, imprimir_arreglo, titulo_impresion;
+non terminal graficoPie, valores_grafica_pie, array_G, cadena_titulo, lista_instrucciones_pie;
+non terminal graficoBarra, valores_grafica_barra, lista_instrucciones_barra, graficoLinea, valores_grafica_linea, lista_instrucciones_linea;
+non terminal histograma_p, valores_histograma, lista_instrucciones_histograma;
+
 /*--------------Producciones-------------*/
 
 inicio ::= PROGRAM codigo END PROGRAM;
 
 codigo ::= sentencia | codigo sentencia;
 
-sentencia ::= declaracion | arreglo | imprimir | imprimir_arreglo;
+sentencia ::= declaracion | arreglo | imprimir | imprimir_arreglo | graficoPie | graficoBarra | graficoLinea | histograma_p;
 
 declaracion ::= VAR DOS_PUNTOS tipo_variable:a DOS_PUNTOS DOS_PUNTOS IDENTIFICADOR:b MENOR GUION operacion:c  END PUNTO_COMA{:
     
@@ -271,3 +293,336 @@ titulo_impresion ::= CADENA:t {:RESULT = t;:} | IDENTIFICADOR:t {:
                             System.out.println("Error semántico: La variable "+t+" no ha sido declarada");
                         }
         :};
+
+graficoPie ::= GRAPHPIE PARENTESIS_IZQ lista_instrucciones_pie EXEC GRAPHPIE END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA{:
+
+                Grafica grafica = new Grafica();
+                grafica.crearPanelGrafica(pieChart);
+                Principal.escritorio.add(grafica);
+                grafica.setVisible(true);
+                dataset = new DefaultPieDataset();
+                pieChart = ChartFactory.createPieChart(null, dataset, true, true, false);
+                 
+                :};
+
+lista_instrucciones_pie ::= valores_grafica_pie:v {:
+                            RESULT = v;
+                        :} 
+                        | lista_instrucciones_pie:lista valores_grafica_pie:v {:
+                            RESULT = lista;
+                        :};
+//Para los valores de la grafica de pie podra venir varias veces la misma insruccion, por ejemplo dos titulos. Pero solo se tomara el ultimo
+//Los valores a obtener son label, values, titulo.
+
+valores_grafica_pie ::= LABEL DOS_PUNTOS DOS_PUNTOS CHAR IGUAL array_G:l END PUNTO_COMA{:
+
+                            //Casteamos el objeto a un arraylist
+                            ArrayList<Object> lista = (ArrayList<Object>) l;
+
+                            //Tenemos los siguientes casos, el dataset esta vacio, o ya tiene valores
+                            //Si esta vacio, se agregan los valores de la llave y el valor en 0
+
+                            //Si ya tiene valores se modifican las llaves pero no se modifican los valores existentes
+                            
+                            if(dataset.getItemCount() == 0){
+                                for (int i = 0; i < lista.size(); i++) {
+                                    dataset.setValue(lista.get(i).toString(), 0);
+                                }
+                            } else {
+                                //Creamos un nuevo dataset
+                                DefaultPieDataset nuevoDatasetTemporal = new DefaultPieDataset();
+
+                                for (int i = 0; i < lista.size(); i++) {
+                                    Comparable oldKey = (Comparable) dataset.getKeys().get(i);
+                                    Number value = dataset.getValue(oldKey);
+                                    Comparable newKey = (Comparable) lista.get(i).toString();
+                                    nuevoDatasetTemporal.setValue(newKey, value);
+                                    System.out.println("Se agrego al nuevo dataset Llave: "+newKey+" Valor: "+value);
+
+                                }
+                                
+                                dataset.clear();
+
+                                for(Object newKey : nuevoDatasetTemporal.getKeys()){
+                                    dataset.setValue((Comparable) newKey, nuevoDatasetTemporal.getValue((String) newKey));
+
+                                }
+
+                                System.out.println("Se modifico el dataset");
+
+                            }
+
+                        :}
+                    | VALUES DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G:v END PUNTO_COMA{:
+
+                        //Casteamos el objeto a un arraylist
+                        ArrayList<Object> lista = (ArrayList<Object>) v;
+                        int i = 0;
+                    
+                        //Si el dataset no esta vació se agregan los valores a las llaves existentes
+                        //Si esta vació se crean las llaves como llaneNueva + i siendo i el contador
+                        if(dataset.getItemCount() == 0){
+                            for (Object valor : lista) {
+                                dataset.setValue("llaveNueva"+i, Double.parseDouble(valor.toString()));
+                                i++;
+                            }
+                        } else {
+                            for (Object valor : lista) {
+                                Comparable key = (Comparable) dataset.getKeys().get(i);
+                                dataset.setValue(key, Double.parseDouble(valor.toString()));
+                                i++;
+                            }
+                        }
+
+                    :}
+                    | TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                        pieChart.setTitle(t.toString());
+                    :};
+
+array_G ::= valores_arreglo_org:v {:RESULT = v;:};
+
+cadena_titulo ::= CADENA:t {:RESULT = t;:}
+                    | IDENTIFICADOR:t {:
+                        Variable variable = tablaSimbolos.obtenerVariable(t.toString().toLowerCase());
+                        if (variable != null) {
+                            RESULT = variable.getValor();
+                        } else {
+                            System.out.println("Error semántico: La variable "+t+" no ha sido declarada");
+                        }
+                    :};
+
+graficoBarra ::= GRAPHBAR PARENTESIS_IZQ lista_instrucciones_barra EXEC GRAPHBAR END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA{:
+
+                Grafica grafica = new Grafica();
+                grafica.crearPanelGrafica(barchart);
+                Principal.escritorio.add(grafica);
+                grafica.setVisible(true);
+                barChart = new DefaultCategoryDataset();
+                barchart = ChartFactory.createBarChart(null, null, null, barChart);
+                 
+                :};
+
+lista_instrucciones_barra ::= valores_grafica_barra:v {:
+                            RESULT = v;
+                        :} 
+                        | lista_instrucciones_barra:lista valores_grafica_barra:v {:
+                            RESULT = lista;
+                        :};
+
+valores_grafica_barra ::= TITULOX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                            barchart.getCategoryPlot().getDomainAxis().setLabel(t.toString());
+                        :}
+                    | TITULOY DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                            barchart.getCategoryPlot().getRangeAxis().setLabel(t.toString());
+                        :}
+                    | EJEX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL array_G:x END PUNTO_COMA{:
+
+                        //Casteamos el objeto a un arraylist
+                        ArrayList<Object> lista = (ArrayList<Object>) x;
+                        int i = 0;
+                    
+                        //Si el dataset no esta vació se modifican las llaves existentes y se mantiene el valor
+                        //Si esta vació se crean las llaves con los valores del arreglo y se les asigna 0
+                        if(barChart.getColumnCount() == 0){
+                            for (Object valor : lista) {
+                                barChart.addValue(0, "Categoria 1", valor.toString());
+                                i++;
+                            }
+                        } else {
+                            //Creamos un nuevo dataset temporal
+                            DefaultCategoryDataset nuevoDatasetTemporal = new DefaultCategoryDataset();
+                            for (Object valor : lista) {
+                                nuevoDatasetTemporal.setValue(barChart.getValue("Categoria 1", barChart.getColumnKey(i).toString()), "Categoria 1", valor.toString());
+                                i++;
+                            }
+
+                            //Vaciamos el barChart
+                            barChart.clear();
+
+                            //Agregamos los valores del nuevo dataset temporal al barChart
+                            for (Object key : nuevoDatasetTemporal.getColumnKeys()) {
+                                barChart.addValue(nuevoDatasetTemporal.getValue("Categoria 1", key.toString()), "Categoria 1", key.toString());
+                            }
+                        }
+                        
+                    
+                    :}
+                    | EJEY DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G:y END PUNTO_COMA{:
+
+                        //Casteamos el objeto a un arraylist
+                        ArrayList<Object> lista = (ArrayList<Object>) y;
+                        int i = 0;
+                    
+                        //Si el dataset no esta vació se agregan los valores a las llaves existentes
+                        //Si esta vació se crean las llaves como llaneNueva + i siendo i el contador
+                        if(barChart.getRowCount() == 0){
+                            for (Object valor : lista) {
+                                barChart.addValue(Double.parseDouble(valor.toString()), "Categoria 1", "llaveNueva"+i);
+                                i++;
+                            }
+                        } else {
+                            for (Object valor : lista) {
+                                barChart.setValue(Double.parseDouble(valor.toString()), "Categoria 1", barChart.getColumnKey(i).toString());
+                                i++;
+                            }
+                        }
+                    
+                    :}
+                    | TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                        barchart.setTitle(t.toString());
+                    :};
+
+
+graficoLinea ::= GRAPHLINE PARENTESIS_IZQ lista_instrucciones_linea EXEC GRAPHLINE END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA{:
+
+                Grafica grafica = new Grafica();
+                grafica.crearPanelGrafica(lineChart);
+                Principal.escritorio.add(grafica);
+                grafica.setVisible(true);
+                dataLine = new DefaultCategoryDataset();
+                lineChart = ChartFactory.createLineChart(null, null, null, dataLine);
+                 
+                :};
+
+lista_instrucciones_linea ::= valores_grafica_linea:v {:
+                            RESULT = v;
+                        :} 
+                        | lista_instrucciones_linea:lista valores_grafica_linea:v {:
+                            RESULT = lista;
+                        :};
+
+valores_grafica_linea ::= TITULOX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                            lineChart.getCategoryPlot().getDomainAxis().setLabel(t.toString());
+                        :}
+                    | TITULOY DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                            lineChart.getCategoryPlot().getRangeAxis().setLabel(t.toString());
+                        :}
+                    | EJEX DOS_PUNTOS DOS_PUNTOS CHAR IGUAL array_G:x END PUNTO_COMA{:
+                        
+                            //Casteamos el objeto a un arraylist
+                            ArrayList<Object> lista = (ArrayList<Object>) x;
+                            int i = 0;
+                        
+                            //Si el dataset no esta vació se modifican las llaves existentes y se mantiene el valor
+                            //Si esta vació se crean las llaves con los valores del arreglo y se les asigna 0
+                            if(dataLine.getColumnCount() == 0){
+                                for (Object valor : lista) {
+                                    dataLine.addValue(0, "Categoria 1", valor.toString());
+                                    i++;
+                                }
+                            } else {
+                                //Creamos un nuevo dataset temporal
+                                DefaultCategoryDataset nuevoDatasetTemporal = new DefaultCategoryDataset();
+                                for (Object valor : lista) {
+                                    nuevoDatasetTemporal.setValue(dataLine.getValue("Categoria 1", dataLine.getColumnKey(i).toString()), "Categoria 1", valor.toString());
+                                    i++;
+                                }
+    
+                                //Vaciamos el barChart
+                                dataLine.clear();
+    
+                                //Agregamos los valores del nuevo dataset temporal al barChart
+                                for (Object key : nuevoDatasetTemporal.getColumnKeys()) {
+                                    dataLine.addValue(nuevoDatasetTemporal.getValue("Categoria 1", key.toString()), "Categoria 1", key.toString());
+                                }
+                            }
+
+                    :}
+                    | EJEY DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G:y END PUNTO_COMA{:
+
+                        //Casteamos el objeto a un arraylist
+                        ArrayList<Object> lista = (ArrayList<Object>) y;
+                        int i = 0;
+                    
+                        //Si el dataset no esta vació se agregan los valores a las llaves existentes
+                        //Si esta vació se crean las llaves como llaneNueva + i siendo i el contador
+                        if(dataLine.getRowCount() == 0){
+                            for (Object valor : lista) {
+                                dataLine.addValue(Double.parseDouble(valor.toString()), "Categoria 1", "llaveNueva"+i);
+                                i++;
+                            }
+                        } else {
+                            for (Object valor : lista) {
+                                dataLine.addValue(Double.parseDouble(valor.toString()), "Categoria 1", dataLine.getColumnKey(i).toString());
+                                i++;
+                            }
+                        }
+
+                    :}
+                    | TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL cadena_titulo:t END PUNTO_COMA{:
+                        lineChart.setTitle(t.toString());
+                    :};
+
+histograma_p ::= HISTOGRAM PARENTESIS_IZQ lista_instrucciones_histograma:arreglo EXEC HISTOGRAM END PUNTO_COMA PARENTESIS_DER END PUNTO_COMA{:
+
+                //Lo convertimos a double
+                ArrayList<Double> valores = new ArrayList<>();
+                for(Object valor : valores_histograma_arreglo){
+                    valores.add(Double.parseDouble(valor.toString()));
+                }
+
+                //Ordenamos el arreglo
+                Collections.sort(valores);
+
+                //Para generar el histograma necesitamos el valor, junto a su frecuencia
+                //De ahí obtenemos la frecuencia acumulada y la frecuencia relativa. DEbemos meter a la consola una pequeña tabla con estos valores
+
+                //Obtenemos la frecuencia de cada valor
+                Map<Double, Integer> frecuencias = new HashMap<>();
+                for (Double valor : valores){
+                    frecuencias.put(valor, frecuencias.getOrDefault(valor, 0) + 1);
+                }
+
+                //Obtenemos la frecuencia acumulada
+                Map<Double, Integer> frecuenciasAcumuladas = new HashMap<>();
+                int acumulada = 0;
+                for (Map.Entry<Double, Integer> entry : frecuencias.entrySet()){
+                    acumulada += entry.getValue();
+                    frecuenciasAcumuladas.put(entry.getKey(), acumulada);
+                }
+
+                //Obtenemos la frecuencia relativa
+
+                Map<Double, Double> frecuenciasRelativas = new HashMap<>();
+                for (Map.Entry<Double, Integer> entry : frecuencias.entrySet()){
+                    frecuenciasRelativas.put(entry.getKey(), (double) entry.getValue() / valores.size());
+                }
+
+                //Imprimimos la tabla
+                Principal.txtConsola.append("\n--------------------\nAnalisis de arreglo\n--------------------\n");
+                Principal.txtConsola.append("\nValor\tFrecuencia\tFrecuencia Acumulada\tFrecuencia Relativa\n");
+                for (Map.Entry<Double, Integer> entry : frecuencias.entrySet()){
+                    Principal.txtConsola.append(entry.getKey()+"\t"+entry.getValue()+"\t"+frecuenciasAcumuladas.get(entry.getKey())+"\t"+frecuenciasRelativas.get(entry.getKey())+"\n");
+                }
+                //Imprimimos fila totales que es la suna de las frecuencias, la frecuencia acumulada y la frecuencia relativa
+                Principal.txtConsola.append("\nTotales\t"+valores.size()+"\t"+valores.size()+"\t1.0\n");
+
+                //Agregamos los valores al histograma
+                for (Map.Entry<Double, Integer> entry : frecuencias.entrySet()){
+                    histograma.addValue(entry.getValue(), "Categoria 1", entry.getKey());
+                }
+
+                Grafica grafica = new Grafica();
+                grafica.crearPanelGrafica(histoChart);
+                Principal.escritorio.add(grafica);
+                grafica.setVisible(true);
+                histograma = new DefaultCategoryDataset();
+                histoChart = ChartFactory.createBarChart(null, null, null, histograma);
+                valores_histograma_arreglo = new ArrayList<Object>();
+                 
+                :};
+
+lista_instrucciones_histograma ::= valores_histograma:v {:
+                            RESULT = v;
+                        :} 
+                        | lista_instrucciones_histograma:lista valores_histograma:v {:
+                            RESULT = v;
+                        :};
+
+valores_histograma ::= TITULO DOS_PUNTOS DOS_PUNTOS CHAR IGUAL titulo_impresion:t END PUNTO_COMA{:
+                            histoChart.setTitle(t.toString());
+                        :}
+                    | VALUES DOS_PUNTOS DOS_PUNTOS DOUBLE IGUAL array_G:v END PUNTO_COMA {:
+
+                        valores_histograma_arreglo = (ArrayList<Object>) v;
+                    :};

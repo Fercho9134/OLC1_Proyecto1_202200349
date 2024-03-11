@@ -1,4 +1,4 @@
-/*
+    /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
@@ -6,8 +6,10 @@ package vista;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -211,17 +213,17 @@ public class Principal extends javax.swing.JFrame {
             public boolean accept(File file) {
                 return file.getName().toLowerCase().endsWith(".df") || file.isDirectory();
             }
-            
+
             public String getDescription() {
                 return "Archivos .df";
             }
         });
-        
+
         int result = fileChooser.showOpenDialog(null);
         if (result == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             filePath = file.getAbsolutePath();
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
                 String line;
                 StringBuilder content = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
@@ -263,7 +265,7 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JMenuItem btnAbrir;
     private javax.swing.JMenuItem btnCerrar;
     private javax.swing.JMenuItem btnNuevo;
-    private javax.swing.JDesktopPane escritorio;
+    public static javax.swing.JDesktopPane escritorio;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu1;

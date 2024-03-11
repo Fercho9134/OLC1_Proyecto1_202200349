@@ -11,15 +11,26 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
+import main.Arreglos;
+import main.ErroresLexicos;
+import main.ErroresSintacticos;
 import main.TablaSimbolos;
 import main.Token;
+import main.Variable;
 
 /**
  *
  * @author Fernando
  */
 public class Codigo extends javax.swing.JInternalFrame {
+    
+    ArrayList<ErroresLexicos> lexicos = new ArrayList<>();
+    ArrayList<ErroresSintacticos> sintacticos = new ArrayList<>();
+    ArrayList<Variable> variables = new ArrayList<>();
+    ArrayList<Arreglos> arreglos = new ArrayList<>();
+    ArrayList<Token> tokens = new ArrayList<>();
 
     /**
      * Creates new form Codigo
@@ -121,12 +132,27 @@ public class Codigo extends javax.swing.JInternalFrame {
         btnTokens.setText("Reportes");
 
         jMenuItem2.setText("Reporte tokens");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
         btnTokens.add(jMenuItem2);
 
         btnErrores.setText("Reporte errores");
+        btnErrores.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnErroresActionPerformed(evt);
+            }
+        });
         btnTokens.add(btnErrores);
 
         btnReporteTablas.setText("Reporte tabla de simbolos");
+        btnReporteTablas.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnReporteTablasActionPerformed(evt);
+            }
+        });
         btnTokens.add(btnReporteTablas);
 
         jMenuBar1.add(btnTokens);
@@ -160,27 +186,77 @@ public class Codigo extends javax.swing.JInternalFrame {
     private void btnEjecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEjecutarActionPerformed
         Principal.listaTokens.clear();
         Principal.txtConsola.setText("");
+        this.arreglos.clear();
+        this.tokens.clear();
+        this.lexicos.clear();
+        this.sintacticos.clear();
+        this.variables.clear();
         
         try {
             String text = this.txtEntradaCodigo.getText();
             System.out.println(text);
             Analizador_Lexico scanner = new Analizador_Lexico(new BufferedReader(new StringReader(text)));
+            this.tokens = scanner.listaTokens;
+            this.lexicos = scanner.listaErrores;
+            
             Parser parser = new Parser(scanner);
             parser.parse();
-            parser.imprimirVariables();
-            parser.imprimirArreglos();
+            this.sintacticos = parser.erroresSintacticos;
+            this.variables = parser.tablaSimbolos.obtenerVariables();
+            this.arreglos = parser.tablaArreglos.obtenerArreglos();
+            
+            
+            if (!this.lexicos.isEmpty() || !this.sintacticos.isEmpty()){
+                JOptionPane.showMessageDialog(null, "Se encontraron errores durante el analisis, genere el reporte.");
+            }
+
         } catch (Exception e) {
           //  System.out.println(e);
           e.printStackTrace();
         }
         
-        System.out.println("********Imprimiendo Tokens*******");
-        for(Token token : Principal.listaTokens){
-            System.out.println("Tipo: " + token.getTipo() + " Lexema: " + token.getLexema() + " Fila: " + token.getFila() + " Columna: " + token.getColumna());
-        }
         
      
     }//GEN-LAST:event_btnEjecutarActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        try {
+            //Table tokens
+            String tablaTokens = this.tablaToknes(this.tokens);
+            FileWriter writer = new FileWriter("Tokens.html");
+            writer.write(tablaTokens);
+            writer.close();
+            System.out.println("Tabla HTML generada con éxito.");
+            Runtime.getRuntime().exec("cmd /c start " + "Tokens.html");
+        } catch (Exception e) {
+        }
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void btnErroresActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnErroresActionPerformed
+        try {
+            //Table tokens
+            String tablaErrores = this.tablaErrores(this.lexicos, this.sintacticos);
+            FileWriter writer = new FileWriter("Errores.html");
+            writer.write(tablaErrores);
+            writer.close();
+            System.out.println("Tabla HTML generada con éxito.");
+            Runtime.getRuntime().exec("cmd /c start " + "Errores.html");
+        } catch (Exception e) {
+        }
+    }//GEN-LAST:event_btnErroresActionPerformed
+
+    private void btnReporteTablasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReporteTablasActionPerformed
+        try {
+            //Table tokens
+            String tablaSimbolos = this.tablaSimbolos(this.variables, this.arreglos);
+            FileWriter writer = new FileWriter("Tabladesimbolos.html");
+            writer.write(tablaSimbolos);
+            writer.close();
+            System.out.println("Tabla HTML generada con éxito.");
+            Runtime.getRuntime().exec("cmd /c start " + "Tabladesimbolos.html");
+        } catch (Exception e) {
+        }
+    }//GEN-LAST:event_btnReporteTablasActionPerformed
 
     public void agregarCodigoTextArea(String codigo, String filePath){
         
@@ -204,7 +280,125 @@ public class Codigo extends javax.swing.JInternalFrame {
         }
     }
     
+    public String tablaToknes(ArrayList<Token> tokens) {
+        StringBuilder htmlTable = new StringBuilder();
+        htmlTable.append("<html>");
+        htmlTable.append("<head>");
+        htmlTable.append("<title>Tabla de Tokens</title>");
+        htmlTable.append("<style> table { width: 100%; border-collapse: collapse; border: 1px solid #dddddd; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; } th { background-color: #f2f2f2; text-align: left; } tr:nth-child(even) { background-color: #f9f9f9; } h2 { font-family: Arial, sans-serif; color: #333333; } body { margin: 20px; } </style>");
+        htmlTable.append("</head>");
+        htmlTable.append("<body>");
+        htmlTable.append("<h2>Tabla de Tokens</h2>");
+        htmlTable.append("<table border=\"1\">");
+        htmlTable.append("<tr><th>Tipo</th><th>Lexema</th><th>Fila</th><th>Columna</th></tr>");
+        
+        for (Token row : tokens) {
+            htmlTable.append("<tr>");
+
+                htmlTable.append("<td>").append(row.getTipo()).append("</td>");
+                htmlTable.append("<td>").append(row.getLexema()).append("</td>");
+                htmlTable.append("<td>").append(row.getFila()).append("</td>");
+                htmlTable.append("<td>").append(row.getColumna()).append("</td>");
+                
+            htmlTable.append("</tr>");
+        }
+       
+        
+        htmlTable.append("</table>");
+        htmlTable.append("</body>");
+        htmlTable.append("</html>");
+        
+        return htmlTable.toString();
+    }
     
+    public String tablaErrores(ArrayList<ErroresLexicos> lexicos, ArrayList<ErroresSintacticos> sintacticos) {
+        StringBuilder htmlTable = new StringBuilder();
+        htmlTable.append("<html>");
+        htmlTable.append("<head>");
+        htmlTable.append("<title>Tabla de Errores</title>");
+        htmlTable.append("<style> table { width: 100%; border-collapse: collapse; border: 1px solid #dddddd; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; } th { background-color: #f2f2f2; text-align: left; } tr:nth-child(even) { background-color: #f9f9f9; } h2 { font-family: Arial, sans-serif; color: #333333; } body { margin: 20px; } </style>");
+        htmlTable.append("</head>");
+        htmlTable.append("<body>");
+        htmlTable.append("<h2>Tabla de Errores</h2>");
+        htmlTable.append("<table border=\"1\">");
+        htmlTable.append("<tr><th>Tipo</th><th>Error</th><th>Fila</th><th>Columna</th></tr>");
+        
+        for (ErroresLexicos row : lexicos) {
+            htmlTable.append("<tr>");
+
+                htmlTable.append("<td>").append(row.getTipo()).append("</td>");
+                htmlTable.append("<td>").append(row.getCaracter()).append("</td>");
+                htmlTable.append("<td>").append(row.getFila()).append("</td>");
+                htmlTable.append("<td>").append(row.getColumna()).append("</td>");
+                
+            htmlTable.append("</tr>");
+        }
+        
+        for (ErroresSintacticos row : sintacticos) {
+            htmlTable.append("<tr>");
+
+                htmlTable.append("<td>").append(row.getTipo()).append("</td>");
+                htmlTable.append("<td>").append(row.getToken()).append("</td>");
+                htmlTable.append("<td>").append(row.getFila()).append("</td>");
+                htmlTable.append("<td>").append(row.getColumna()).append("</td>");
+                
+            htmlTable.append("</tr>");
+        }
+        
+        htmlTable.append("</table>");
+        htmlTable.append("</body>");
+        htmlTable.append("</html>");
+        
+        return htmlTable.toString();
+    }
+    
+    public String tablaSimbolos(ArrayList<Variable> variables, ArrayList<Arreglos> arreglos) {
+        StringBuilder htmlTable = new StringBuilder();
+        htmlTable.append("<html>");
+        htmlTable.append("<head>");
+        htmlTable.append("<title>Tabla de simbolos</title>");
+        htmlTable.append("<style> table { width: 100%; border-collapse: collapse; border: 1px solid #dddddd; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; } th { background-color: #f2f2f2; text-align: left; } tr:nth-child(even) { background-color: #f9f9f9; } h2 { font-family: Arial, sans-serif; color: #333333; } body { margin: 20px; } </style>");
+        htmlTable.append("</head>");
+        htmlTable.append("<body>");
+        htmlTable.append("<h2>Tabla de simbolos</h2>");
+        htmlTable.append("<table border=\"1\">");
+        htmlTable.append("<tr><th>#</th><th>Nombre</th><th>Tipo</th><th>Valor</th></tr>");
+        
+        int i = 1;
+        
+        for (Variable row : variables) {
+            htmlTable.append("<tr>");
+            
+                htmlTable.append("<td>").append(i).append("</td>");
+                htmlTable.append("<td>").append(row.getNombre()).append("</td>");
+                htmlTable.append("<td>").append(row.getTipo()).append("</td>");
+                htmlTable.append("<td>").append(row.getValor()).append("</td>");
+                i++;
+            htmlTable.append("</tr>");
+        }
+        
+        for (Arreglos row : arreglos) {
+            htmlTable.append("<tr>");
+            String valores_str = "";
+            for(Object objeto : row.obtenerValores()){
+        
+            valores_str = valores_str + objeto.toString() + ", ";
+        }
+            
+                htmlTable.append("<td>").append(i).append("</td>");
+                htmlTable.append("<td>").append(row.getNombre()).append("</td>");
+                htmlTable.append("<td>").append(row.getTipo()).append("</td>");
+                htmlTable.append("<td>").append(valores_str).append("</td>");
+                i++;
+            htmlTable.append("</tr>");
+        }
+        
+        htmlTable.append("</table>");
+        htmlTable.append("</body>");
+        htmlTable.append("</html>");
+        
+        return htmlTable.toString();
+    }
     
     
 

@@ -1,93 +1,44 @@
 package main;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-public class pruebas {
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.category.DefaultCategoryDataset;
+
+import javax.swing.*;
+
+public class pruebas extends JFrame {
+
+    public pruebas(String title) {
+        super(title);
+
+        // Creamos un conjunto de datos de ejemplo
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        dataset.addValue(1.0, "Category 1", "Column 1");
+        dataset.addValue(2.0, "Category 1", "Column 2");
+        dataset.addValue(3.0, "Category 1", "Column 3");
+
+
+        // Creamos el gráfico de barras utilizando ChartFactory
+        JFreeChart barChart = ChartFactory.createBarChart(
+                "Bar Chart Example",    // Título del gráfico
+                "Category",             // Etiqueta del eje X
+                "Value",                // Etiqueta del eje Y
+                dataset                 // Conjunto de datos
+        );
+
+        // Creamos un panel para mostrar el gráfico
+        ChartPanel chartPanel = new ChartPanel(barChart);
+        setContentPane(chartPanel);
+    }
 
     public static void main(String[] args) {
-        // Configurar el look and feel de Java Swing
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Crear un nuevo JFrame para la ventana principal
-        JFrame frame = new JFrame();
-        frame.setSize(300, 200);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("Inicio de Sesión");
-        
-        // Centrar la ventana en la pantalla
-        frame.setLocationRelativeTo(null);
-
-        // Crear un panel para los componentes
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
-
-        // Crear un panel para el título
-        JPanel tituloPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JLabel tituloLabel = new JLabel("Inicio de Sesión");
-        tituloLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        tituloPanel.add(tituloLabel);
-
-        // Crear un panel para los campos de texto y las etiquetas
-        JPanel formularioPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        formularioPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Crear etiquetas y campos de texto para usuario y contraseña
-        JLabel usuarioLabel = new JLabel("Usuario:");
-        JTextField usuarioField = new JTextField();
-        usuarioField.setPreferredSize(new Dimension(200, 25)); // Establecer tamaño
-        JLabel contraseñaLabel = new JLabel("Contraseña:");
-        JPasswordField contraseñaField = new JPasswordField();
-        contraseñaField.setPreferredSize(new Dimension(200, 25)); // Establecer tamaño
-
-        // Añadir componentes al panel del formulario
-        formularioPanel.add(usuarioLabel);
-        formularioPanel.add(usuarioField);
-        formularioPanel.add(contraseñaLabel);
-        formularioPanel.add(contraseñaField);
-
-        // Crear un panel para el botón de inicio de sesión
-        JPanel botonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-
-        // Botón de inicio de sesión
-        JButton iniciarSesionButton = new JButton("Iniciar Sesión");
-        iniciarSesionButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Aquí puedes agregar la lógica de inicio de sesión
-                String usuario = usuarioField.getText();
-                String contraseña = new String(contraseñaField.getPassword());
-                System.out.println("Usuario: " + usuario);
-                System.out.println("Contraseña: " + contraseña);
-            }
+        SwingUtilities.invokeLater(() -> {
+            pruebas example = new pruebas("Bar Chart Example");
+            example.setSize(800, 600);
+            example.setLocationRelativeTo(null);
+            example.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            example.setVisible(true);
         });
-        
-        // Botón de registro
-        JButton registrarButton = new JButton("Registrar");
-        registrarButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Aquí puedes agregar la lógica de registro
-                JOptionPane.showMessageDialog(null, "Función de registro aún no implementada.", "Registro", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
-        // Añadir el botón al panel del botón
-        botonPanel.add(iniciarSesionButton);
-        botonPanel.add(registrarButton);
-
-        // Añadir los paneles al panel principal
-        panel.add(tituloPanel, BorderLayout.NORTH);
-        panel.add(formularioPanel, BorderLayout.CENTER);
-        panel.add(botonPanel, BorderLayout.SOUTH);
-
-        // Añadir el panel principal al frame y mostrar la ventana
-        frame.add(panel);
-        frame.setVisible(true);
     }
 }

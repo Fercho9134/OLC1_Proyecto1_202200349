@@ -56,16 +56,25 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Reporte tokens"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItem2ActionPerformed"/>
+              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="btnErrores">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Reporte errores"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnErroresActionPerformed"/>
+              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="btnReporteTablas">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Reporte tabla de simbolos"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnReporteTablasActionPerformed"/>
+              </Events>
             </MenuItem>
           </SubComponents>
         </Menu>
